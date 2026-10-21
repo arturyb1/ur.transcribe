@@ -46,15 +46,11 @@ Timestamps are an option in Settings.
 
 ### Download
 
-Get the latest `ur.transcribe-<version>-macos-arm64.zip` from [Releases](https://github.com/arturyb1/ur.transcribe/releases), unzip it, and move `ur.transcribe.app` to `/Applications`.
+1. Download `ur.transcribe-<version>-macos-arm64.zip` from [Releases](https://github.com/arturyb1/ur.transcribe/releases) and unzip it.
+2. Move **ur.transcribe** into **Applications**.
+3. Open it and follow the setup window.
 
-The release is not notarized by Apple, so macOS blocks it the first time you open it. Clear the download flag once:
-
-```bash
-xattr -dr com.apple.quarantine /Applications/ur.transcribe.app
-```
-
-Or open it, then go to System Settings, Privacy & Security, and click **Open Anyway**.
+Releases are signed with a Developer ID and notarized by Apple, so they open without security warnings.
 
 ### Build from source
 
