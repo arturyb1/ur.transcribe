@@ -20,6 +20,7 @@ No bot joins the call. No audio is uploaded, and no audio is ever written to dis
 - **Files itself.** Transcripts land in a default folder, or in a different folder per calendar or per title keyword (for example, work calendar calls go to one folder and studio calls to another).
 - **Shows the conversation as it happens.** Open the menu bar icon for a live preview of the latest turns, or click **Open** for the full transcript in its own resizable window, with timestamps and copy.
 - **Stays out of the way.** A small waveform in the menu bar, filled while it is transcribing.
+- **Keeps itself up to date.** New versions install from inside the app, never in the middle of a call.
 
 ## Output
 
@@ -52,6 +53,8 @@ Timestamps are an option in Settings.
 3. Open it from Applications and follow the setup window.
 
 Releases are signed with a Developer ID and notarized by Apple, so they open without security warnings. A `.zip` of the same app is attached too.
+
+After that, ur.transcribe updates itself. It checks once a day, and you can use **Check for Updates…** in the menu or in Settings. An update never restarts the app during a call; it waits until the transcript is saved.
 
 ### Build from source
 
@@ -89,7 +92,7 @@ macOS does not let apps read the system audio permission, so after you click **R
 
 ## Settings
 
-- **General**: open at login, auto-detect, which apps to watch, language, timestamps, echo removal.
+- **General**: open at login, auto-detect, automatic update checks, which apps to watch, language, timestamps, echo removal.
 - **Folders**: the default folder, plus rules ("Calendar is Work" goes to one folder, "Title contains Studio" to another). The first matching rule wins.
 - **Speakers**: your name, and each naming layer on or off. You can also tune the Zoom patterns here.
 
@@ -147,6 +150,7 @@ Sources/URTranscribe/
 ## Credits
 
 - [FluidAudio](https://github.com/FluidInference/FluidAudio) (Apache 2.0) for on-device diarization.
+- [Sparkle](https://sparkle-project.org) (MIT) for updates.
 - NVIDIA's Sortformer streaming diarization model ([NVIDIA Open Model License](https://developer.nvidia.com/open-model-license)).
 - Apple's Speech framework for transcription.
 

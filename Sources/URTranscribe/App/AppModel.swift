@@ -40,6 +40,7 @@ final class AppModel: ObservableObject {
         detector.onCallEnded = { [weak self] in self?.stop() }
         if settings.autoDetect { detector.start() } else { state = .paused }
         permissions.refresh()
+        Updater.shared.start()
 
         // The speaker model is cached after its first download; load it quietly.
         if settings.useDiarization, LiveDiarizer.isModelCached {
@@ -98,6 +99,7 @@ final class AppModel: ObservableObject {
                 _ = await session.stop()
                 self.session = nil
                 state = settings.autoDetect ? .idle : .paused
+                Updater.shared.callEnded()
             }
         }
     }
@@ -113,6 +115,7 @@ final class AppModel: ObservableObject {
             recordingSince = nil
             preview = LivePreview()
             state = settings.autoDetect ? .idle : .paused
+            Updater.shared.callEnded()
         }
     }
 

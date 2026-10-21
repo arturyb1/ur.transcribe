@@ -25,14 +25,25 @@ cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
 for bundle in "$BIN"/*.bundle; do
   [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
 done
+# Sparkle (auto-updates). ditto keeps the framework's symlinks intact.
+mkdir -p "$APP/Contents/Frameworks"
+ditto "$BIN/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
 
-# Notarization needs a secure timestamp; ad-hoc signatures cannot have one.
-TIMESTAMP=()
-[[ "$IDENTITY" != "-" ]] && TIMESTAMP=(--timestamp)
+# Real identities get the hardened runtime and a secure timestamp, which
+# notarization requires. Ad-hoc builds skip the hardened runtime: its library
+# validation would refuse to load the ad-hoc signed Sparkle framework.
+SIGN=(codesign --force --sign "$IDENTITY")
+[[ "$IDENTITY" != "-" ]] && SIGN+=(--options runtime --timestamp)
 
-codesign --force --deep --options runtime ${TIMESTAMP[@]+"${TIMESTAMP[@]}"} \
-  --entitlements "$ROOT/Resources/URTranscribe.entitlements" \
-  --sign "$IDENTITY" "$APP"
+# Sign inside out, as Sparkle documents: its helpers, the framework, then the app.
+SPARKLE="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+"${SIGN[@]}" "$SPARKLE/XPCServices/Installer.xpc"
+"${SIGN[@]}" --preserve-metadata=entitlements "$SPARKLE/XPCServices/Downloader.xpc"
+"${SIGN[@]}" "$SPARKLE/Autoupdate"
+"${SIGN[@]}" "$SPARKLE/Updater.app"
+"${SIGN[@]}" "$APP/Contents/Frameworks/Sparkle.framework"
+"${SIGN[@]}" --entitlements "$ROOT/Resources/URTranscribe.entitlements" "$APP"
+codesign --verify --strict --deep "$APP"
 echo "Built $APP"
 
 if [[ "${1:-}" == "--install" ]]; then

@@ -25,6 +25,7 @@ struct SettingsView: View {
 private struct GeneralTab: View {
     @ObservedObject var settings: Settings
     @ObservedObject var permissions: Permissions
+    @ObservedObject private var updater = Updater.shared
     @State private var locales: [Locale] = []
 
     var body: some View {
@@ -35,6 +36,16 @@ private struct GeneralTab: View {
                 Toggle("Start transcribing when a call starts", isOn: Binding(
                     get: { settings.autoDetect }, set: { AppModel.shared.setAutoDetect($0) }))
                 Button("Review permissions…") { WindowManager.shared.showSetup() }
+            }
+            Section("Updates") {
+                Toggle("Check for updates automatically", isOn: Binding(
+                    get: { updater.automaticallyChecks }, set: { updater.automaticallyChecks = $0 }))
+                HStack {
+                    Text("Version \(updater.version)").foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Check for Updates…") { updater.checkForUpdates() }
+                        .disabled(!updater.canCheckForUpdates)
+                }
             }
             Section("Detect calls in") {
                 ForEach(CallApp.all) { app in

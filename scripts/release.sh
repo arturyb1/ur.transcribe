@@ -7,15 +7,25 @@
 #   2. Notary credentials saved under a keychain profile:
 #        xcrun notarytool store-credentials urtranscribe-notary --apple-id YOU --team-id TEAMID
 #
+#   3. A Sparkle update signing key (scripts/release.sh uses account "urtranscribe"):
+#        .build/artifacts/sparkle/Sparkle/bin/generate_keys --account urtranscribe
+#
 # Then:
 #   DEVELOPER_ID="Developer ID Application: Your Name (TEAMID)" scripts/release.sh
-#   DEVELOPER_ID="..." scripts/release.sh --upload    # also attach to the GitHub release
+#   DEVELOPER_ID="..." scripts/release.sh --upload
+#
+# --upload attaches the DMG and zip to the existing GitHub release v<version>
+# (create it with notes first), signs the zip for Sparkle, adds it to
+# appcast.xml, and pushes the feed so installed copies update themselves.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
 : "${DEVELOPER_ID:?Set DEVELOPER_ID to your Developer ID Application identity}"
 PROFILE="${NOTARY_PROFILE:-urtranscribe-notary}"
+SPARKLE_ACCOUNT="${SPARKLE_ACCOUNT:-urtranscribe}"
+BUILD="$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' Resources/Info.plist)"
+REPO="arturyb1/ur.transcribe"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' Resources/Info.plist)"
 APP="$ROOT/build/ur.transcribe.app"
 NAME="ur.transcribe-$VERSION-macos-arm64"
@@ -57,6 +67,21 @@ shasum -a 256 "$DMG" "$ZIP"
 
 if [[ "${1:-}" == "--upload" ]]; then
   echo "==> Uploading to GitHub release v$VERSION"
-  gh release upload "v$VERSION" "$DMG" "$ZIP" --clobber
+  gh release upload "v$VERSION" "$DMG" "$ZIP" --clobber --repo "$REPO"
+
+  echo "==> Publishing the update to the appcast"
+  SIGNATURE="$(.build/artifacts/sparkle/Sparkle/bin/sign_update --account "$SPARKLE_ACCOUNT" "$ZIP")"
+  NOTES="$(mktemp)"
+  gh release view "v$VERSION" --repo "$REPO" --json body -q .body \
+    | gh api markdown -F text=@- -f mode=gfm -f context="$REPO" > "$NOTES"
+  python3 scripts/update-appcast.py \
+    --version "$VERSION" --build "$BUILD" \
+    --url "https://github.com/$REPO/releases/download/v$VERSION/$NAME.zip" \
+    --signature "$SIGNATURE" --notes-html "$NOTES" \
+    --link "https://github.com/$REPO/releases/tag/v$VERSION"
+  rm -f "$NOTES"
+  git add appcast.xml
+  git commit -m "appcast: $VERSION"
+  git push
 fi
 echo "Done: $DMG"

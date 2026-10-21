@@ -18,6 +18,7 @@ struct MenuPanel: View {
     @ObservedObject var model: AppModel
     @ObservedObject var settings: Settings
     @ObservedObject var permissions: Permissions
+    @ObservedObject var updater = Updater.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -35,6 +36,10 @@ struct MenuPanel: View {
                 Button("Finish setup…") { WindowManager.shared.showSetup() }
                     .buttonStyle(.link)
             }
+            if let version = updater.availableVersion {
+                Button("Update to \(version) available…") { updater.checkForUpdates() }
+                    .buttonStyle(.link)
+            }
             Divider()
             primaryAction
             Toggle("Detect calls automatically", isOn: Binding(
@@ -47,6 +52,11 @@ struct MenuPanel: View {
                     Button(model.state == .recording ? "Current file" : "Last file") { model.reveal(url) }
                 }
                 Spacer()
+                Button {
+                    updater.checkForUpdates()
+                } label: { Image(systemName: "arrow.triangle.2.circlepath") }
+                    .help("Check for Updates…")
+                    .disabled(!updater.canCheckForUpdates)
                 Button {
                     WindowManager.shared.showSettings()
                 } label: { Image(systemName: "gearshape") }
