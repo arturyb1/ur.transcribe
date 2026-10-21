@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Owns the setup and settings windows. Earshot has no Dock icon, so windows
+/// Owns the setup and settings windows. ur.transcribe has no Dock icon, so windows
 /// are managed by hand and the app is brought forward when one opens.
 @MainActor
 final class WindowManager {
@@ -12,7 +12,7 @@ final class WindowManager {
 
     func showSetup() {
         let model = AppModel.shared
-        show(&setupWindow, title: "Set up Earshot") {
+        show(&setupWindow, title: "Set up ur.transcribe") {
             SetupView(permissions: model.permissions, settings: model.settings)
         }
     }
@@ -23,7 +23,7 @@ final class WindowManager {
 
     func showSettings() {
         let model = AppModel.shared
-        show(&settingsWindow, title: "Earshot Settings") {
+        show(&settingsWindow, title: "ur.transcribe Settings") {
             SettingsView(settings: model.settings, permissions: model.permissions)
         }
     }

@@ -4,7 +4,7 @@ import SwiftUI
 /// Renders each screen to a PNG, for docs and for checking layout without
 /// clicking through the app.
 ///
-///     Earshot.app/Contents/MacOS/Earshot --snapshot docs/
+///     ur.transcribe.app/Contents/MacOS/URTranscribe --snapshot docs/
 @MainActor
 enum Snapshots {
     static func run(into folder: String) async -> Int32 {

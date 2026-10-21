@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>Earshot</string>
+	<string>URTranscribe</string>
 	<key>CFBundleIdentifier</key>
-	<string>io.github.arturyb1.earshot</string>
+	<string>io.github.arturyb1.urtranscribe</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Earshot</string>
+	<string>ur.transcribe</string>
 	<key>CFBundleDisplayName</key>
-	<string>Earshot</string>
+	<string>ur.transcribe</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -29,10 +29,10 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Earshot transcribes your side of the call from the microphone. Audio stays on this Mac and is never saved.</string>
+	<string>ur.transcribe transcribes your side of the call from the microphone. Audio stays on this Mac and is never saved.</string>
 	<key>NSAudioCaptureUsageDescription</key>
-	<string>Earshot transcribes the other side of the call from your call app's audio. Audio stays on this Mac and is never saved.</string>
+	<string>ur.transcribe transcribes the other side of the call from your call app's audio. Audio stays on this Mac and is never saved.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Earshot reads the current calendar event to name the transcript, know who is on the call, and choose its folder.</string>
+	<string>ur.transcribe reads the current calendar event to name the transcript, know who is on the call, and choose its folder.</string>
 </dict>
 </plist>

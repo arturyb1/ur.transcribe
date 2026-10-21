@@ -22,7 +22,7 @@ final class TranscriptWriter {
     private let date: Date
     private var lines: [Line] = []
     private var dirty = false
-    private let log = Logger(subsystem: "Earshot", category: "TranscriptWriter")
+    private let log = Logger(subsystem: "ur.transcribe", category: "TranscriptWriter")
 
     init(folder: URL, title: String, date: Date) {
         self.title = title

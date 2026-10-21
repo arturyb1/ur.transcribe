@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 @main
-struct EarshotApp: App {
+struct URTranscribeApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @ObservedObject private var model = AppModel.shared
 

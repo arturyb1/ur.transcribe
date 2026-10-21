@@ -49,7 +49,7 @@ struct MenuPanel: View {
                 Button {
                     NSApp.terminate(nil)
                 } label: { Image(systemName: "power") }
-                    .help("Quit Earshot")
+                    .help("Quit ur.transcribe")
             }
             .buttonStyle(.borderless)
         }

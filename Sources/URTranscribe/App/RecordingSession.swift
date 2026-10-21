@@ -30,7 +30,7 @@ final class RecordingSession {
     private var remoteStartedAt = Date()
     private var volatileMine = ""
     private var volatileTheirs = ""
-    private let log = Logger(subsystem: "Earshot", category: "RecordingSession")
+    private let log = Logger(subsystem: "ur.transcribe", category: "RecordingSession")
 
     init(app: CallApp?, settings: Settings, diarizerModels: SortformerModels?) {
         self.app = app
@@ -52,7 +52,7 @@ final class RecordingSession {
         writer = TranscriptWriter(folder: settings.folder(for: meeting), title: title, date: startedAt)
 
         guard let locale = await StreamTranscriber.resolveLocale(settings.localeIdentifier) else {
-            throw NSError(domain: "Earshot", code: 3, userInfo: [NSLocalizedDescriptionKey: "Your language is not supported by on-device transcription."])
+            throw NSError(domain: "ur.transcribe", code: 3, userInfo: [NSLocalizedDescriptionKey: "Your language is not supported by on-device transcription."])
         }
         let micT = try await StreamTranscriber(locale: locale)
         let remoteT = try await StreamTranscriber(locale: locale)

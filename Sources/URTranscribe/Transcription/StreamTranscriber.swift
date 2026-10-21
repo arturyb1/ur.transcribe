@@ -27,7 +27,7 @@ final class StreamTranscriber: @unchecked Sendable {
     private let inputStream: AsyncStream<AnalyzerInput>
     private var resultsTask: Task<Void, Never>?
     private var framesFed: Int64 = 0
-    private let log = Logger(subsystem: "Earshot", category: "StreamTranscriber")
+    private let log = Logger(subsystem: "ur.transcribe", category: "StreamTranscriber")
 
     static func makeModule(locale: Locale) -> SpeechTranscriber {
         SpeechTranscriber(
@@ -61,7 +61,7 @@ final class StreamTranscriber: @unchecked Sendable {
         transcriber = Self.makeModule(locale: locale)
         analyzer = SpeechAnalyzer(modules: [transcriber])
         guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) else {
-            throw NSError(domain: "Earshot", code: 2, userInfo: [NSLocalizedDescriptionKey: "Speech model has no usable audio format."])
+            throw NSError(domain: "ur.transcribe", code: 2, userInfo: [NSLocalizedDescriptionKey: "Speech model has no usable audio format."])
         }
         converter = BufferConverter(outputFormat: format)
         (inputStream, input) = AsyncStream<AnalyzerInput>.makeStream(bufferingPolicy: .unbounded)

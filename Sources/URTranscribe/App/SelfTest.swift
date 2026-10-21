@@ -5,7 +5,7 @@ import Foundation
 /// permissions needed. Feeds audio files (played back to back) through the
 /// same code the remote side of a call uses and prints the labeled result.
 ///
-///     Earshot.app/Contents/MacOS/Earshot --selftest a.wav b.wav ...
+///     ur.transcribe.app/Contents/MacOS/URTranscribe --selftest a.wav b.wav ...
 @MainActor
 enum SelfTest {
     static func run(files: [String]) async -> Int32 {

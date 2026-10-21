@@ -25,10 +25,10 @@ final class ZoomSpeakerWatcher: @unchecked Sendable {
     private let excludedNames: Set<String>
     private let clock: () -> Double
     private var timer: DispatchSourceTimer?
-    private let queue = DispatchQueue(label: "earshot.zoom-ax", qos: .utility)
+    private let queue = DispatchQueue(label: "urtranscribe.zoom-ax", qos: .utility)
     private let lock = NSLock()
     private var observations: [(time: Double, name: String)] = []
-    private let log = Logger(subsystem: "Earshot", category: "ZoomSpeakerWatcher")
+    private let log = Logger(subsystem: "ur.transcribe", category: "ZoomSpeakerWatcher")
 
     static var isTrusted: Bool { AXIsProcessTrusted() }
 

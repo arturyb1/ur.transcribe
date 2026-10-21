@@ -24,7 +24,7 @@ final class AppModel: ObservableObject {
 
     private let detector = CallDetector()
     private var session: RecordingSession?
-    private let log = Logger(subsystem: "Earshot", category: "AppModel")
+    private let log = Logger(subsystem: "ur.transcribe", category: "AppModel")
 
     private init() {
         permissions = Permissions(settings: settings)

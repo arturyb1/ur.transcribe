@@ -8,8 +8,8 @@ struct SetupView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Set up Earshot").font(.title2.bold())
-                Text("Earshot transcribes your calls live, on this Mac. Audio never leaves it and is never saved, only the text.")
+                Text("Set up ur.transcribe").font(.title2.bold())
+                Text("ur.transcribe transcribes your calls live, on this Mac. Audio never leaves it and is never saved, only the text.")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -53,7 +53,7 @@ struct SetupView: View {
             GroupBox("Where and when") {
                 VStack(alignment: .leading, spacing: 10) {
                     FolderPicker(title: "Save transcripts to", path: $settings.destinationPath)
-                    Toggle("Open Earshot when I log in", isOn: Binding(
+                    Toggle("Open ur.transcribe when I log in", isOn: Binding(
                         get: { permissions.openAtLogin }, set: { permissions.setOpenAtLogin($0) }))
                 }
                 .padding(6)

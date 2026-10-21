@@ -19,12 +19,12 @@ final class LiveDiarizer: @unchecked Sendable {
     private let converter = BufferConverter(
         outputFormat: AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16_000, channels: 1, interleaved: false)!
     )
-    private let queue = DispatchQueue(label: "earshot.diarizer", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "urtranscribe.diarizer", qos: .userInitiated)
     private let lock = NSLock()
     private var turns: [Turn] = []
     private var pending: [Float] = []
     private var lastRefresh = Date.distantPast
-    private let log = Logger(subsystem: "Earshot", category: "LiveDiarizer")
+    private let log = Logger(subsystem: "ur.transcribe", category: "LiveDiarizer")
 
     static let config = SortformerConfig.default
 

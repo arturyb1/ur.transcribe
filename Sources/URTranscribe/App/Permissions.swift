@@ -6,7 +6,7 @@ import FluidAudio
 import Foundation
 import ServiceManagement
 
-/// Tracks every permission and download Earshot needs, and asks for them.
+/// Tracks every permission and download ur.transcribe needs, and asks for them.
 @MainActor
 final class Permissions: ObservableObject {
     enum Status: Equatable {
@@ -139,7 +139,7 @@ final class Permissions: ObservableObject {
         do {
             if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
         } catch {
-            NSLog("Earshot: could not change login item: \(error.localizedDescription)")
+            NSLog("ur.transcribe: could not change login item: \(error.localizedDescription)")
         }
         openAtLogin = SMAppService.mainApp.status == .enabled
     }

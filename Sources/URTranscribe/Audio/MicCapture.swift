@@ -14,7 +14,7 @@ final class MicCapture: @unchecked Sendable {
     private var observer: NSObjectProtocol?
     private let lock = NSLock()
     private var pendingResync: TimeInterval?
-    private let log = Logger(subsystem: "Earshot", category: "MicCapture")
+    private let log = Logger(subsystem: "ur.transcribe", category: "MicCapture")
 
     func start() throws {
         startedAt = Date()
@@ -37,7 +37,7 @@ final class MicCapture: @unchecked Sendable {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else {
-            throw NSError(domain: "Earshot", code: 1, userInfo: [NSLocalizedDescriptionKey: "No microphone is available."])
+            throw NSError(domain: "ur.transcribe", code: 1, userInfo: [NSLocalizedDescriptionKey: "No microphone is available."])
         }
         input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, _ in
             guard let self else { return }

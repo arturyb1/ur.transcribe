@@ -25,10 +25,10 @@ final class SystemAudioTap: @unchecked Sendable {
     private var tapID = AudioObjectID(kAudioObjectUnknown)
     private var aggregateID = AudioObjectID(kAudioObjectUnknown)
     private var procID: AudioDeviceIOProcID?
-    private let queue = DispatchQueue(label: "earshot.system-audio", qos: .userInitiated)
-    private let log = Logger(subsystem: "Earshot", category: "SystemAudioTap")
+    private let queue = DispatchQueue(label: "urtranscribe.system-audio", qos: .userInitiated)
+    private let log = Logger(subsystem: "ur.transcribe", category: "SystemAudioTap")
 
-    /// - Parameter bundlePrefixes: apps to capture. Empty captures everything except Earshot.
+    /// - Parameter bundlePrefixes: apps to capture. Empty captures everything except ur.transcribe.
     func start(bundlePrefixes: [String]) throws {
         let description: CATapDescription
         let processes = AudioProcess.all()
@@ -36,7 +36,7 @@ final class SystemAudioTap: @unchecked Sendable {
             bundlePrefixes.contains { process.bundleID.hasPrefix($0) }
         }
         if matches.isEmpty {
-            // No app given, or it has no audio process yet: take everything but Earshot.
+            // No app given, or it has no audio process yet: take everything but ur.transcribe.
             let own = AudioProcess.current().map { [$0.objectID] } ?? []
             description = CATapDescription(monoGlobalTapButExcludeProcesses: own)
         } else {
@@ -46,7 +46,7 @@ final class SystemAudioTap: @unchecked Sendable {
             description.isProcessRestoreEnabled = true
         }
         description.uuid = UUID()
-        description.name = "Earshot"
+        description.name = "ur.transcribe"
         description.isPrivate = true
         description.muteBehavior = .unmuted
 
@@ -56,7 +56,7 @@ final class SystemAudioTap: @unchecked Sendable {
         guard let outputUID = CoreAudio.defaultOutputDeviceUID() else { throw TapError.noOutputDevice }
         let tapUID = CoreAudio.string(tapID, kAudioTapPropertyUID) ?? description.uuid.uuidString
         let aggregate: [String: Any] = [
-            kAudioAggregateDeviceNameKey: "Earshot Tap",
+            kAudioAggregateDeviceNameKey: "ur.transcribe tap",
             kAudioAggregateDeviceUIDKey: UUID().uuidString,
             kAudioAggregateDeviceMainSubDeviceKey: outputUID,
             kAudioAggregateDeviceIsPrivateKey: true,

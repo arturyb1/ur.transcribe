@@ -26,7 +26,7 @@ private struct GeneralTab: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Open Earshot when I log in", isOn: Binding(
+                Toggle("Open ur.transcribe when I log in", isOn: Binding(
                     get: { permissions.openAtLogin }, set: { permissions.setOpenAtLogin($0) }))
                 Toggle("Start transcribing when a call starts", isOn: Binding(
                     get: { settings.autoDetect }, set: { AppModel.shared.setAutoDetect($0) }))
@@ -163,7 +163,7 @@ private struct SpeakersTab: View {
     private func saveSnapshot() {
         let text = ZoomSpeakerWatcher.snapshot()
         let folder = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Logs/Earshot", isDirectory: true)
+            .appendingPathComponent("Logs/ur.transcribe", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let url = folder.appendingPathComponent("zoom-accessibility-\(Int(Date().timeIntervalSince1970)).txt")
         try? text.write(to: url, atomically: true, encoding: .utf8)

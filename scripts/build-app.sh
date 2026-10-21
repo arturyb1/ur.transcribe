@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds Earshot.app into ./build.
+# Builds ur.transcribe.app into ./build.
 #
 #   scripts/build-app.sh                 # release build, ad-hoc signed
 #   SIGN_IDENTITY="Developer ID Application: You (TEAMID)" scripts/build-app.sh
@@ -11,7 +11,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
-APP="$ROOT/build/Earshot.app"
+APP="$ROOT/build/ur.transcribe.app"
 IDENTITY="${SIGN_IDENTITY:--}"
 
 swift build -c release --arch arm64
@@ -19,7 +19,7 @@ BIN="$(swift build -c release --arch arm64 --show-bin-path)"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN/Earshot" "$APP/Contents/MacOS/Earshot"
+cp "$BIN/URTranscribe" "$APP/Contents/MacOS/URTranscribe"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
 [ -f "$ROOT/Resources/AppIcon.icns" ] && cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/"
 for bundle in "$BIN"/*.bundle; do
@@ -27,13 +27,13 @@ for bundle in "$BIN"/*.bundle; do
 done
 
 codesign --force --deep --options runtime \
-  --entitlements "$ROOT/Resources/Earshot.entitlements" \
+  --entitlements "$ROOT/Resources/URTranscribe.entitlements" \
   --sign "$IDENTITY" "$APP"
 echo "Built $APP"
 
 if [[ "${1:-}" == "--install" ]]; then
-  pkill -x Earshot 2>/dev/null || true
-  rm -rf /Applications/Earshot.app
+  pkill -x URTranscribe 2>/dev/null || true
+  rm -rf /Applications/ur.transcribe.app
   cp -R "$APP" /Applications/
-  echo "Installed /Applications/Earshot.app"
+  echo "Installed /Applications/ur.transcribe.app"
 fi

@@ -1,5 +1,5 @@
 import XCTest
-@testable import Earshot
+@testable import URTranscribe
 
 @MainActor
 final class TranscriptWriterTests: XCTestCase {

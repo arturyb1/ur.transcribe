@@ -1,6 +1,6 @@
 import Foundation
 
-/// An app Earshot can detect a call in, matched by bundle ID prefix.
+/// An app ur.transcribe can detect a call in, matched by bundle ID prefix.
 struct CallApp: Identifiable, Hashable {
     let id: String
     let name: String
@@ -69,7 +69,7 @@ final class Settings: ObservableObject {
     private init() {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         destinationPath = defaults.string(forKey: "destinationPath")
-            ?? documents.appendingPathComponent("Earshot Transcripts").path
+            ?? documents.appendingPathComponent("ur.transcribe").path
         rules = (defaults.data(forKey: "rules")).flatMap { try? JSONDecoder().decode([RoutingRule].self, from: $0) } ?? []
         myName = defaults.string(forKey: "myName") ?? NSFullUserName()
         autoDetect = defaults.object(forKey: "autoDetect") as? Bool ?? true
