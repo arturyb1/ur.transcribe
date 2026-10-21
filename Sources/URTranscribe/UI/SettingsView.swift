@@ -37,6 +37,17 @@ private struct GeneralTab: View {
                     get: { settings.autoDetect }, set: { AppModel.shared.setAutoDetect($0) }))
                 Button("Review permissions…") { WindowManager.shared.showSetup() }
             }
+            Section {
+                Toggle("Notify when transcription starts and stops", isOn: $settings.notifyOnStartStop)
+                Picker("Stop when no one speaks for", selection: $settings.silenceStopMinutes) {
+                    Text("Never").tag(0)
+                    ForEach([2, 3, 5, 10, 15], id: \.self) { Text("\($0) minutes").tag($0) }
+                }
+            } header: {
+                Text("Starting and stopping")
+            } footer: {
+                Text("A call ends when its app leaves the meeting or releases the microphone, or after the silence above. Each automatic stop waits \(AppModel.stopCountdown) seconds so you can keep transcribing.")
+            }
             Section("Updates") {
                 Toggle("Check for updates automatically", isOn: Binding(
                     get: { updater.automaticallyChecks }, set: { updater.automaticallyChecks = $0 }))

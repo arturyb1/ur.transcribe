@@ -6,9 +6,11 @@ struct CallApp: Identifiable, Hashable {
     let name: String
     let bundlePrefixes: [String]
     let enabledByDefault: Bool
+    /// Processes that exist only while a meeting is running, when the app has one.
+    var meetingProcessNames: [String] = []
 
     static let all: [CallApp] = [
-        CallApp(id: "zoom", name: "Zoom", bundlePrefixes: ["us.zoom."], enabledByDefault: true),
+        CallApp(id: "zoom", name: "Zoom", bundlePrefixes: ["us.zoom."], enabledByDefault: true, meetingProcessNames: ["CptHost"]),
         CallApp(id: "teams", name: "Microsoft Teams", bundlePrefixes: ["com.microsoft.teams"], enabledByDefault: true),
         CallApp(id: "webex", name: "Webex", bundlePrefixes: ["Cisco-Systems.Spark", "com.webex."], enabledByDefault: true),
         CallApp(id: "slack", name: "Slack huddles", bundlePrefixes: ["com.tinyspeck.slackmacgap"], enabledByDefault: true),
@@ -63,6 +65,9 @@ final class Settings: ObservableObject {
     @Published var useZoomNames: Bool { didSet { defaults.set(useZoomNames, forKey: "useZoomNames") } }
     @Published var zoomPatterns: [String] { didSet { defaults.set(zoomPatterns, forKey: "zoomPatterns") } }
     @Published var localeIdentifier: String { didSet { defaults.set(localeIdentifier, forKey: "localeIdentifier") } }
+    @Published var notifyOnStartStop: Bool { didSet { defaults.set(notifyOnStartStop, forKey: "notifyOnStartStop") } }
+    /// Minutes without any speech before a call counts as over. 0 turns it off.
+    @Published var silenceStopMinutes: Int { didSet { defaults.set(silenceStopMinutes, forKey: "silenceStopMinutes") } }
     @Published var hasCompletedSetup: Bool { didSet { defaults.set(hasCompletedSetup, forKey: "hasCompletedSetup") } }
     @Published var systemAudioRequested: Bool { didSet { defaults.set(systemAudioRequested, forKey: "systemAudioRequested") } }
 
@@ -82,6 +87,8 @@ final class Settings: ObservableObject {
         useZoomNames = defaults.object(forKey: "useZoomNames") as? Bool ?? true
         zoomPatterns = defaults.stringArray(forKey: "zoomPatterns") ?? ZoomSpeakerWatcher.defaultPatterns
         localeIdentifier = defaults.string(forKey: "localeIdentifier") ?? ""
+        notifyOnStartStop = defaults.object(forKey: "notifyOnStartStop") as? Bool ?? true
+        silenceStopMinutes = defaults.object(forKey: "silenceStopMinutes") as? Int ?? 5
         hasCompletedSetup = defaults.bool(forKey: "hasCompletedSetup")
         systemAudioRequested = defaults.bool(forKey: "systemAudioRequested")
     }

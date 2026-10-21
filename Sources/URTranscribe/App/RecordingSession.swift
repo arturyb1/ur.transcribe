@@ -10,6 +10,8 @@ import os
 final class RecordingSession {
     let app: CallApp?
     let startedAt = Date()
+    /// When anyone last said anything, on either stream.
+    private(set) var lastSpeechAt = Date()
     private(set) var meeting: MeetingInfo?
     private(set) var writer: TranscriptWriter!
 
@@ -63,9 +65,9 @@ final class RecordingSession {
         remoteTranscriber = remoteT
 
         micT.onFinal = { [weak self] segment in self?.addMine(segment) }
-        micT.onVolatile = { [weak self] text in self?.volatileMine = text; self?.publishPreview() }
+        micT.onVolatile = { [weak self] text in self?.volatileMine = text; self?.heard(text); self?.publishPreview() }
         remoteT.onFinal = { [weak self] segment in self?.addTheirs(segment) }
-        remoteT.onVolatile = { [weak self] text in self?.volatileTheirs = text; self?.publishPreview() }
+        remoteT.onVolatile = { [weak self] text in self?.volatileTheirs = text; self?.heard(text); self?.publishPreview() }
         try await micT.start()
         try await remoteT.start()
 
@@ -123,9 +125,17 @@ final class RecordingSession {
         return writer.isEmpty ? nil : writer.fileURL
     }
 
+    /// Treat now as the last moment someone spoke (for example after "Keep transcribing").
+    func noteActivity() { lastSpeechAt = Date() }
+
+    private func heard(_ text: String) {
+        if !text.isEmpty { lastSpeechAt = Date() }
+    }
+
     // MARK: - Segments
 
     private func addMine(_ segment: TranscribedSegment) {
+        lastSpeechAt = Date()
         writer.add(.init(
             source: .me, start: micStartOffset + segment.start, end: micStartOffset + segment.end,
             text: segment.text, streamStart: segment.start, streamEnd: segment.end))
@@ -133,6 +143,7 @@ final class RecordingSession {
     }
 
     private func addTheirs(_ segment: TranscribedSegment) {
+        lastSpeechAt = Date()
         writer.add(.init(
             source: .remote, start: remoteStartOffset + segment.start, end: remoteStartOffset + segment.end,
             text: segment.text, streamStart: segment.start, streamEnd: segment.end))

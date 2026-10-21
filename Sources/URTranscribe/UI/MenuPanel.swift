@@ -23,6 +23,9 @@ struct MenuPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
+            if let pending = model.pendingStop, model.state == .recording {
+                stopCountdown(pending)
+            }
             if model.state == .recording {
                 preview
             } else if !model.transcript.isEmpty {
@@ -87,6 +90,27 @@ struct MenuPanel: View {
                 }
             }
         }
+    }
+
+    private func stopCountdown(_ pending: AppModel.PendingStop) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 4) {
+                Text("Stopping in")
+                Text(timerInterval: Date()...pending.deadline, countsDown: true)
+                    .monospacedDigit()
+            }
+            .font(.callout.weight(.semibold))
+            Text(pending.reason).font(.caption).foregroundStyle(.secondary)
+            HStack {
+                Button("Keep transcribing") { model.keepTranscribing() }
+                    .keyboardShortcut(.defaultAction)
+                Button("Stop now") { model.stop() }
+            }
+            .controlSize(.small)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var preview: some View {

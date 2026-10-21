@@ -21,6 +21,7 @@ final class Permissions: ObservableObject {
     @Published var speakerModel: Status = .unknown
     @Published var calendar: Status = .unknown
     @Published var accessibility: Status = .unknown
+    @Published var notifications: Status = .unknown
     @Published var openAtLogin = false
     /// Why the last download failed, shown under its row.
     @Published var speechModelError: String?
@@ -58,6 +59,13 @@ final class Permissions: ObservableObject {
             speakerModel = model?.diarizerModels != nil || LiveDiarizer.isModelCached ? .granted : .notAsked
         }
         openAtLogin = SMAppService.mainApp.status == .enabled
+        Task {
+            notifications = switch await Notifier.shared.authorizationStatus() {
+            case .authorized, .provisional, .ephemeral: .granted
+            case .denied: .denied
+            default: .notAsked
+            }
+        }
         if speechModel != .working, speechModel != .denied { Task { await refreshSpeechModel() } }
     }
 
@@ -82,6 +90,16 @@ final class Permissions: ObservableObject {
             _ = await CalendarLookup.requestAccess()
             refresh()
             if calendar == .denied { Self.openPrivacyPane("Privacy_Calendars") }
+        }
+    }
+
+    func requestNotifications() {
+        Task {
+            _ = await Notifier.shared.requestAuthorization()
+            refresh()
+            if notifications == .denied, let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") {
+                NSWorkspace.shared.open(url)
+            }
         }
     }
 

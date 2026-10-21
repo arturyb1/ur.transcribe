@@ -33,6 +33,9 @@ enum Snapshots {
             ("transcript", AnyView(TranscriptWindowView(model: model).frame(width: 620, height: 560))),
         ]
         render(recording, into: out)
+
+        model.callEnded(reason: "Zoom meeting ended")
+        render([("menu-stopping", AnyView(MenuPanel(model: model, settings: model.settings, permissions: model.permissions)))], into: out)
         return 0
     }
 

@@ -88,3 +88,42 @@ final class ModelInstallTests: XCTestCase {
         }
     }
 }
+
+@MainActor
+final class AutoStopTests: XCTestCase {
+    override func setUp() async throws {
+        _ = NSApplication.shared
+        AppModel.shared.showSampleCall()
+    }
+
+    func testEndStartsCountdownAndKeepCancelsIt() {
+        let model = AppModel.shared
+        model.callEnded(reason: "Zoom meeting ended")
+        let pending = try? XCTUnwrap(model.pendingStop)
+        XCTAssertEqual(pending?.reason, "Zoom meeting ended")
+        XCTAssertGreaterThan(pending?.deadline.timeIntervalSinceNow ?? 0, TimeInterval(AppModel.stopCountdown - 2))
+
+        model.keepTranscribing()
+        XCTAssertNil(model.pendingStop)
+        // The same end signal doesn't ask again until the call app shows activity.
+        model.callEnded(reason: "Zoom meeting ended")
+        XCTAssertNil(model.pendingStop)
+    }
+
+    func testCountdownRunsOut() async throws {
+        let original = AppModel.stopCountdown
+        AppModel.stopCountdown = 1
+        defer { AppModel.stopCountdown = original }
+        AppModel.shared.showSampleCall()
+        AppModel.shared.callEnded(reason: "test")
+        XCTAssertNotNil(AppModel.shared.pendingStop)
+        try await Task.sleep(for: .seconds(1.5))
+        XCTAssertNil(AppModel.shared.pendingStop)
+    }
+
+    func testProcessNamesIncludeThisProcess() {
+        let names = CallDetector.runningProcessNames()
+        XCTAssertGreaterThan(names.count, 10)
+        XCTAssertTrue(names.contains(ProcessInfo.processInfo.processName) || names.contains("xctest"))
+    }
+}

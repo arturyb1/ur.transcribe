@@ -55,6 +55,10 @@ struct SetupView: View {
 
             GroupBox("Where and when") {
                 VStack(alignment: .leading, spacing: 10) {
+                    PermissionRow(
+                        title: "Notifications", detail: "Tells you when transcription starts and stops, so you can change course.",
+                        status: permissions.notifications, action: permissions.requestNotifications)
+                    Divider()
                     FolderPicker(title: "Save transcripts to", path: $settings.destinationPath)
                     Toggle("Open ur.transcribe when I log in", isOn: Binding(
                         get: { permissions.openAtLogin }, set: { permissions.setOpenAtLogin($0) }))

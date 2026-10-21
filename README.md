@@ -10,7 +10,8 @@ No bot joins the call. No audio is uploaded, and no audio is ever written to dis
 
 ## What it does
 
-- **Starts by itself.** When Zoom, Teams, Webex, Slack, FaceTime (or, optionally, a browser) opens your microphone, ur.transcribe starts transcribing. When the call app lets go of the mic, it finishes and saves.
+- **Starts and stops by itself.** When Zoom, Teams, Webex, Slack, FaceTime (or, optionally, a browser) opens your microphone, ur.transcribe starts transcribing. It stops when the meeting ends (for Zoom, when its meeting process exits), when the app releases the mic, or after a few minutes of silence.
+- **Tells you, and lets you change course.** A notification says when it starts, with **Don't transcribe this call**. Before an automatic stop, it gives you 20 seconds to choose **Keep transcribing**, then tells you where the transcript was saved.
 - **Transcribes live, on device.** It uses Apple's SpeechAnalyzer (macOS 26), which runs on your Mac with no cloud service.
 - **Knows who said what.** It works in layers, each one optional:
   1. **You.** Your microphone is its own stream, so your lines are always yours.
@@ -113,7 +114,7 @@ Some work networks block Hugging Face, or both download sources. If the speaker 
 - **Echo.** Without headphones, your mic also picks up the other side through your speakers. ur.transcribe drops mic lines that repeat what the remote stream said at the same moment, but headphones give the cleanest result.
 - **Group calls.** The diarizer handles up to four remote voices and does best when people take turns. Heavy crosstalk, or very similar voices, can merge speakers.
 - **Zoom names are best effort.** Zoom's accessibility labels vary by version and language. If names never appear, open Settings, then Speakers, then **Save Zoom accessibility snapshot** during a call. Find the text Zoom shows next to the active speaker and add a pattern for it. Pull requests with patterns for other Zoom versions are welcome.
-- **Call end detection.** A call counts as over 45 seconds after the app releases the microphone. You can always stop by hand from the menu.
+- **Call end detection.** Zoom meetings end when Zoom's meeting process exits. Other apps end 45 seconds after they release the microphone, and any call ends after the silence limit in Settings (5 minutes by default). Each automatic stop counts down first, and you can always stop by hand from the menu.
 
 ## Development
 
