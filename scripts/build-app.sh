@@ -26,7 +26,11 @@ for bundle in "$BIN"/*.bundle; do
   [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
 done
 
-codesign --force --deep --options runtime \
+# Notarization needs a secure timestamp; ad-hoc signatures cannot have one.
+TIMESTAMP=()
+[[ "$IDENTITY" != "-" ]] && TIMESTAMP=(--timestamp)
+
+codesign --force --deep --options runtime ${TIMESTAMP[@]+"${TIMESTAMP[@]}"} \
   --entitlements "$ROOT/Resources/URTranscribe.entitlements" \
   --sign "$IDENTITY" "$APP"
 echo "Built $APP"
