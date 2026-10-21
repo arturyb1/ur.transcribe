@@ -14,18 +14,35 @@ enum Snapshots {
         model.permissions.refresh()
         await model.permissions.refreshSpeechModel()
 
-        let views: [(String, AnyView)] = [
+        let idle: [(String, AnyView)] = [
             ("menu", AnyView(MenuPanel(model: model, settings: model.settings, permissions: model.permissions))),
             ("setup", AnyView(SetupView(permissions: model.permissions, settings: model.settings))),
-            ("settings", AnyView(SettingsView(settings: model.settings, permissions: model.permissions))),
+            ("settings", AnyView(SettingsView(settings: model.settings, permissions: model.permissions).frame(height: 560))),
         ]
+        render(idle, into: out)
+
+        // A failed speaker model download, as a blocked network shows it.
+        model.permissions.speakerModel = .denied
+        model.permissions.speakerModelError = LiveDiarizer.ModelError.unreachable(
+            huggingFace: URLError(.cannotConnectToHost), mirror: URLError(.timedOut)).localizedDescription
+        render([("setup-model-error", AnyView(SetupView(permissions: model.permissions, settings: model.settings)))], into: out)
+
+        model.showSampleCall()
+        let recording: [(String, AnyView)] = [
+            ("menu-recording", AnyView(MenuPanel(model: model, settings: model.settings, permissions: model.permissions))),
+            ("transcript", AnyView(TranscriptWindowView(model: model).frame(width: 620, height: 560))),
+        ]
+        render(recording, into: out)
+        return 0
+    }
+
+    private static func render(_ views: [(String, AnyView)], into out: URL) {
         for appearance in [NSAppearance.Name.aqua, .darkAqua] {
             for (name, view) in views {
                 let suffix = appearance == .darkAqua ? "-dark" : ""
                 save(view, appearance: appearance, to: out.appendingPathComponent("\(name)\(suffix).png"))
             }
         }
-        return 0
     }
 
     private static func save(_ view: AnyView, appearance: NSAppearance.Name, to url: URL) {

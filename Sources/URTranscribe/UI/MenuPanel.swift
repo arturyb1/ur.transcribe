@@ -22,7 +22,12 @@ struct MenuPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
-            if model.state == .recording, !model.preview.isEmpty { preview }
+            if model.state == .recording {
+                preview
+            } else if !model.transcript.isEmpty {
+                Button("Open last transcript") { WindowManager.shared.showTranscript() }
+                    .buttonStyle(.link)
+            }
             if let error = model.lastError {
                 Text(error).font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
             }
@@ -54,7 +59,7 @@ struct MenuPanel: View {
             .buttonStyle(.borderless)
         }
         .padding(14)
-        .frame(width: 320)
+        .frame(width: 400)
     }
 
     private var header: some View {
@@ -75,14 +80,24 @@ struct MenuPanel: View {
     }
 
     private var preview: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(model.preview.enumerated()), id: \.offset) { _, line in
-                Text(line).font(.caption).lineLimit(3).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Live transcript").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    WindowManager.shared.showTranscript()
+                } label: {
+                    Label("Open", systemImage: "arrow.up.left.and.arrow.down.right")
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .help("Open the full transcript in a window")
             }
+            TranscriptList(turns: model.preview.turns, inProgress: model.preview.inProgress, compact: true)
+                .frame(height: 280)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(8)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
+        .padding(10)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
     }
 
     @ViewBuilder private var primaryAction: some View {

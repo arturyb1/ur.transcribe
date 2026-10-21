@@ -13,7 +13,10 @@ final class RecordingSession {
     private(set) var meeting: MeetingInfo?
     private(set) var writer: TranscriptWriter!
 
-    var onPreview: (([String]) -> Void)?
+    /// The last few turns plus words still being recognized, for the menu bar.
+    var onPreview: ((LivePreview) -> Void)?
+    /// The whole transcript so far, every time the file is rewritten.
+    var onTranscript: (([TranscriptTurn]) -> Void)?
 
     private let settings: Settings
     private let diarizerModels: SortformerModels?
@@ -161,15 +164,36 @@ final class RecordingSession {
     }
 
     private func flush(force: Bool = false) {
-        writer.flush(
+        if let turns = writer.flush(
             participants: participants, label: label, removeEcho: settings.removeEcho,
             timestamps: settings.includeTimestamps, force: force)
+        {
+            onTranscript?(turns)
+        }
     }
 
     private func publishPreview() {
-        var preview = writer.recentTurns(3, label: label, removeEcho: settings.removeEcho)
-        if !volatileTheirs.isEmpty { preview.append("… \(volatileTheirs)") }
-        if !volatileMine.isEmpty { preview.append("\(myName): … \(volatileMine)") }
-        onPreview?(Array(preview.suffix(4)))
+        var inProgress: [LivePreview.Partial] = []
+        if !volatileTheirs.isEmpty {
+            let name = namer.isOneOnOne ? namer.name(forSpeaker: nil) : "Remote"
+            inProgress.append(.init(name: name, text: volatileTheirs))
+        }
+        if !volatileMine.isEmpty { inProgress.append(.init(name: myName, text: volatileMine)) }
+        onPreview?(LivePreview(
+            turns: writer.recentTurns(8, label: label, removeEcho: settings.removeEcho),
+            inProgress: inProgress))
     }
+}
+
+struct LivePreview: Equatable {
+    struct Partial: Equatable {
+        let name: String
+        let text: String
+    }
+
+    var turns: [TranscriptTurn] = []
+    /// Words still being recognized, not yet in the file.
+    var inProgress: [Partial] = []
+
+    var isEmpty: Bool { turns.isEmpty && inProgress.isEmpty }
 }

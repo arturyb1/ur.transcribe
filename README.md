@@ -6,7 +6,7 @@ Live call transcription for macOS that runs entirely on your Mac. ur.transcribe 
 
 No bot joins the call. No audio is uploaded, and no audio is ever written to disk. Only the text is saved.
 
-<p align="center"><img src="docs/setup.png" width="420" alt="Setup window"> <img src="docs/menu.png" width="300" alt="Menu bar panel"></p>
+<p align="center"><img src="docs/menu-recording.png" width="340" alt="Menu bar panel with the live transcript"> <img src="docs/transcript.png" width="460" alt="Transcript window"></p>
 
 ## What it does
 
@@ -18,7 +18,8 @@ No bot joins the call. No audio is uploaded, and no audio is ever written to dis
   3. **Group calls.** A speaker diarization model ([Sortformer](https://huggingface.co/FluidInference/diar-streaming-sortformer-coreml) via [FluidAudio](https://github.com/FluidInference/FluidAudio)) separates up to four remote voices live, on the Neural Engine.
   4. **Names for those voices.** On Zoom, ur.transcribe reads who Zoom says is talking through the macOS Accessibility API and pins that name to the matching voice. Voices it cannot name keep stable labels like "Speaker 2".
 - **Files itself.** Transcripts land in a default folder, or in a different folder per calendar or per title keyword (for example, work calendar calls go to one folder and studio calls to another).
-- **Stays out of the way.** A small waveform in the menu bar, filled while it is transcribing. There's a live preview of the last few lines if you open it.
+- **Shows the conversation as it happens.** Open the menu bar icon for a live preview of the latest turns, or click **Open** for the full transcript in its own resizable window, with timestamps and copy.
+- **Stays out of the way.** A small waveform in the menu bar, filled while it is transcribing.
 
 ## Output
 
@@ -79,7 +80,7 @@ ur.transcribe opens a setup window that walks through everything it needs:
 | System audio | The other side of the call (macOS "System Audio Recording") | Yes |
 | Speech model | Apple's on-device transcription model, one-time download from Apple | Yes |
 | Calendar | Names the file, finds one-on-ones, picks the folder | No |
-| Speaker model | Tells remote voices apart, one-time download from Hugging Face | No |
+| Speaker model | Tells remote voices apart, one-time download (Hugging Face, with a GitHub mirror as fallback) | No |
 | Accessibility | Reads Zoom's "who is talking" label for names | No |
 
 You can also pick the destination folder and turn on "Open ur.transcribe when I log in" there.
@@ -99,6 +100,10 @@ macOS does not let apps read the system audio permission, so after you click **R
 - Transcripts are plain files in folders you choose. ur.transcribe keeps no other copy.
 
 **Tell people you're transcribing.** Recording and transcription consent laws vary by place, and some require everyone on the call to agree. ur.transcribe gives the other side no notice of its own. If you use it on a work computer, check your company's policy first.
+
+### Networks that block model downloads
+
+Some work networks block Hugging Face, or both download sources. If the speaker model fails in setup, download `speaker-model-sortformer-v3-fp16.zip` from the [speaker model release](https://github.com/arturyb1/ur.transcribe/releases/tag/speaker-model-v1) on another network, copy it over, and use **From file…** in setup. It installs without any network.
 
 ## Known limits
 

@@ -28,17 +28,92 @@ final class LiveDiarizer: @unchecked Sendable {
 
     static let config = SortformerConfig.default
 
-    /// Whether a previous download left the model on disk, so loading needs no network.
-    static var isModelCached: Bool {
-        let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("FluidAudio/Models/sortformer")
-        let contents = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
-        return !contents.isEmpty
+    enum ModelError: LocalizedError {
+        case unreachable(huggingFace: Error, mirror: Error)
+        case badArchive
+
+        var errorDescription: String? {
+            switch self {
+            case .unreachable(let huggingFace, let mirror):
+                return "Couldn't download it (Hugging Face: \(Self.reason(huggingFace)); GitHub: \(Self.reason(mirror))). Your network may block model downloads. Get speaker-model-sortformer-v3-fp16.zip from the project's releases on another network, then use From file."
+            case .badArchive:
+                return "That file isn't a ur.transcribe speaker model. Use speaker-model-sortformer-v3-fp16.zip from the project's releases."
+            }
+        }
+
+        /// A few words on why a download failed.
+        private static func reason(_ error: Error) -> String {
+            guard let url = error as? URLError else { return error.localizedDescription }
+            switch url.code {
+            case .notConnectedToInternet: return "no internet connection"
+            case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed: return "can't reach the server"
+            case .timedOut: return "timed out"
+            case .secureConnectionFailed, .serverCertificateUntrusted, .serverCertificateHasBadDate,
+                 .serverCertificateNotYetValid, .serverCertificateHasUnknownRoot, .clientCertificateRejected:
+                return "secure connection blocked"
+            case .badServerResponse: return "server refused the download"
+            default: return "network error \(url.code.rawValue)"
+            }
+        }
     }
 
-    /// One-time download from Hugging Face, then cached on disk.
+    /// FluidAudio's model cache. Files placed here load without any network.
+    static let modelsFolder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("FluidAudio/Models", isDirectory: true)
+
+    /// The same model, mirrored on this project's GitHub releases, for networks that block Hugging Face.
+    static let mirrorURL = URL(string:
+        "https://github.com/arturyb1/ur.transcribe/releases/download/speaker-model-v1/speaker-model-sortformer-v3-fp16.zip")!
+
+    /// Whether a complete model is on disk (a failed download can leave partial files behind).
+    static var isModelCached: Bool {
+        let weights = modelsFolder.appendingPathComponent("sortformer/v3/fp16/Sortformer_v2.1.mlmodelc/coremldata.bin")
+        return FileManager.default.fileExists(atPath: weights.path)
+    }
+
+    /// Loads the model from disk, downloading it first if needed: from Hugging
+    /// Face, and if that fails, from the GitHub mirror.
     static func loadModels() async throws -> SortformerModels {
-        try await SortformerModels.loadFromHuggingFace(config: config)
+        if isModelCached, let models = try? await loadCached() { return models }
+        do {
+            return try await SortformerModels.loadFromHuggingFace(config: config)
+        } catch let huggingFace {
+            Logger(subsystem: "ur.transcribe", category: "LiveDiarizer")
+                .error("Hugging Face download failed, trying the mirror: \(huggingFace.localizedDescription)")
+            do {
+                let (download, response) = try await URLSession.shared.download(from: mirrorURL)
+                if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                    throw URLError(.badServerResponse)
+                }
+                try installArchive(download)
+                return try await loadCached()
+            } catch let mirror {
+                throw ModelError.unreachable(huggingFace: huggingFace, mirror: mirror)
+            }
+        }
+    }
+
+    /// Installs a model zip (as published in the releases) into the cache, then loads it.
+    static func installAndLoad(archive: URL) async throws -> SortformerModels {
+        try installArchive(archive)
+        return try await loadCached()
+    }
+
+    private static func installArchive(_ archive: URL) throws {
+        try FileManager.default.createDirectory(at: modelsFolder, withIntermediateDirectories: true)
+        let unzip = Process()
+        unzip.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+        unzip.arguments = ["-x", "-k", archive.path, modelsFolder.path]
+        try unzip.run()
+        unzip.waitUntilExit()
+        guard unzip.terminationStatus == 0, isModelCached else { throw ModelError.badArchive }
+    }
+
+    /// Loads strictly from disk; never touches the network.
+    private static func loadCached() async throws -> SortformerModels {
+        ModelHub.offlineMode = true
+        defer { ModelHub.offlineMode = false }
+        return try await SortformerModels.loadFromHuggingFace(config: config)
     }
 
     init(models: SortformerModels) {

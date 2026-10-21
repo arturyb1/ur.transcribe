@@ -14,7 +14,10 @@ final class AppModel: ObservableObject {
     @Published private(set) var state: State = .idle
     @Published private(set) var currentTitle: String?
     @Published private(set) var recordingSince: Date?
-    @Published private(set) var preview: [String] = []
+    @Published private(set) var preview = LivePreview()
+    /// The current call's transcript, kept after it ends until the next call starts.
+    @Published private(set) var transcript: [TranscriptTurn] = []
+    @Published private(set) var transcriptTitle: String?
     @Published private(set) var lastTranscript: URL?
     @Published private(set) var lastError: String?
 
@@ -40,20 +43,24 @@ final class AppModel: ObservableObject {
 
         // The speaker model is cached after its first download; load it quietly.
         if settings.useDiarization, LiveDiarizer.isModelCached {
-            Task { await loadDiarizerModels() }
+            Task {
+                do { try await loadDiarizerModels() } catch {
+                    log.error("Speaker model unavailable: \(error.localizedDescription)")
+                }
+            }
         }
         if !settings.hasCompletedSetup || !permissions.essentialsGranted {
             WindowManager.shared.showSetup()
         }
     }
 
-    func loadDiarizerModels() async {
-        do {
+    /// Downloads (if needed) and loads the speaker model, or installs it from a zip.
+    func loadDiarizerModels(from archive: URL? = nil) async throws {
+        if let archive {
+            diarizerModels = try await LiveDiarizer.installAndLoad(archive: archive)
+        } else {
             diarizerModels = try await LiveDiarizer.loadModels()
-        } catch {
-            log.error("Speaker model unavailable: \(error.localizedDescription)")
         }
-        permissions.refresh()
     }
 
     func setAutoDetect(_ on: Bool) {
@@ -73,12 +80,16 @@ final class AppModel: ObservableObject {
         state = .starting
         lastError = nil
         let session = RecordingSession(app: app, settings: settings, diarizerModels: diarizerModels)
-        session.onPreview = { [weak self] lines in self?.preview = lines }
+        session.onPreview = { [weak self] preview in self?.preview = preview }
+        session.onTranscript = { [weak self] turns in self?.transcript = turns }
+        transcript = []
+        preview = LivePreview()
         self.session = session
         Task {
             do {
                 try await session.start()
                 currentTitle = session.title
+                transcriptTitle = session.title
                 recordingSince = session.startedAt
                 state = .recording
             } catch {
@@ -100,12 +111,29 @@ final class AppModel: ObservableObject {
             self.session = nil
             currentTitle = nil
             recordingSince = nil
-            preview = []
+            preview = LivePreview()
             state = settings.autoDetect ? .idle : .paused
         }
     }
 
     var currentTranscript: URL? { session?.writer?.fileURL }
+
+    /// Puts a made-up call on screen, for `--snapshot` renders only.
+    func showSampleCall() {
+        let lines = [
+            ("Jane Doe", "Thanks for joining. I wanted to walk through the roadmap for next quarter and get your take on priorities."),
+            ("Sam Lee", "Sure. My main concern is the launch date. Anything new has to fit around the migration."),
+            ("Jane Doe", "That makes sense. Should we start with the review screen, since every team reuses it?"),
+            ("Speaker 3", "From the engineering side, the new API needs a spike before we commit to anything."),
+            ("Sam Lee", "Agreed. Let's put the spike on next week and revisit the plan on Friday."),
+        ]
+        transcript = lines.enumerated().map { TranscriptTurn(id: $0.offset, name: $0.element.0, start: Double($0.offset * 14), text: $0.element.1) }
+        preview = LivePreview(turns: transcript, inProgress: [.init(name: "Remote", text: "I can own the spike if")])
+        transcriptTitle = "Roadmap review"
+        currentTitle = "Roadmap review"
+        recordingSince = Date().addingTimeInterval(-754)
+        state = .recording
+    }
 
     func openDestination() {
         let url = URL(fileURLWithPath: settings.destinationPath, isDirectory: true)

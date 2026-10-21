@@ -22,6 +22,9 @@ final class Permissions: ObservableObject {
     @Published var calendar: Status = .unknown
     @Published var accessibility: Status = .unknown
     @Published var openAtLogin = false
+    /// Why the last download failed, shown under its row.
+    @Published var speechModelError: String?
+    @Published var speakerModelError: String?
 
     private let settings: Settings
     private weak var model: AppModel?
@@ -50,11 +53,12 @@ final class Permissions: ObservableObject {
         // macOS has no public way to read the system audio permission, so we
         // remember that it was requested and show where to check it.
         systemAudio = settings.systemAudioRequested ? .granted : .notAsked
-        if speakerModel != .working {
+        // Keep a failed download's error visible until the next attempt.
+        if speakerModel != .working, speakerModel != .denied {
             speakerModel = model?.diarizerModels != nil || LiveDiarizer.isModelCached ? .granted : .notAsked
         }
         openAtLogin = SMAppService.mainApp.status == .enabled
-        if speechModel != .working { Task { await refreshSpeechModel() } }
+        if speechModel != .working, speechModel != .denied { Task { await refreshSpeechModel() } }
     }
 
     func refreshSpeechModel() async {
@@ -113,25 +117,50 @@ final class Permissions: ObservableObject {
 
     func downloadSpeechModel() {
         speechModel = .working
+        speechModelError = nil
         Task {
             do {
                 guard let locale = await StreamTranscriber.resolveLocale(settings.localeIdentifier) else {
                     speechModel = .denied
+                    speechModelError = "On-device transcription doesn't support your language yet. Pick another in Settings."
                     return
                 }
                 try await StreamTranscriber.installModel(locale: locale)
                 speechModel = .granted
             } catch {
                 speechModel = .denied
+                speechModelError = error.localizedDescription
             }
         }
     }
 
     func downloadSpeakerModel() {
+        loadSpeakerModel(from: nil)
+    }
+
+    /// For Macs that can't download it: pick the model zip from the project's releases.
+    func installSpeakerModelFromFile() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.zip]
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose speaker-model-sortformer-v3-fp16.zip"
+        panel.prompt = "Install"
+        NSApp.activate()
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        loadSpeakerModel(from: url)
+    }
+
+    private func loadSpeakerModel(from archive: URL?) {
         speakerModel = .working
+        speakerModelError = nil
         Task {
-            await model?.loadDiarizerModels()
-            speakerModel = model?.diarizerModels != nil ? .granted : .denied
+            do {
+                try await model?.loadDiarizerModels(from: archive)
+                speakerModel = .granted
+            } catch {
+                speakerModel = .denied
+                speakerModelError = error.localizedDescription
+            }
         }
     }
 

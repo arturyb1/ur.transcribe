@@ -5,6 +5,9 @@ struct SettingsView: View {
     @ObservedObject var settings: Settings
     @ObservedObject var permissions: Permissions
 
+    static let width: CGFloat = 560
+    static let heights: (min: CGFloat, ideal: CGFloat) = (360, 560)
+
     var body: some View {
         TabView {
             GeneralTab(settings: settings, permissions: permissions)
@@ -14,7 +17,8 @@ struct SettingsView: View {
             SpeakersTab(settings: settings, permissions: permissions)
                 .tabItem { Label("Speakers", systemImage: "person.2") }
         }
-        .frame(width: 560, height: 440)
+        .frame(width: Self.width)
+        .frame(minHeight: Self.heights.min, idealHeight: Self.heights.ideal, maxHeight: .infinity)
     }
 }
 

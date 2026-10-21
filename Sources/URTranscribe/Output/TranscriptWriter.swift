@@ -1,6 +1,15 @@
 import Foundation
 import os
 
+/// One speaker's consecutive lines, merged, as shown in the transcript.
+struct TranscriptTurn: Identifiable, Equatable {
+    let id: Int
+    let name: String
+    /// Seconds since the call started.
+    let start: Double
+    var text: String
+}
+
 /// Collects segments from both streams and keeps one markdown file up to date.
 @MainActor
 final class TranscriptWriter {
@@ -40,22 +49,25 @@ final class TranscriptWriter {
     func markDirty() { dirty = true }
 
     /// The latest few rendered turns, for the menu bar preview.
-    func recentTurns(_ count: Int, label: (Line) -> String, removeEcho: Bool) -> [String] {
-        let recent = Array(lines.sorted { $0.start < $1.start }.suffix(30))
-        return turns(of: recent, label: label, removeEcho: removeEcho).suffix(count).map { "\($0.name): \($0.text)" }
+    func recentTurns(_ count: Int, label: (Line) -> String, removeEcho: Bool) -> [TranscriptTurn] {
+        let recent = Array(lines.sorted { $0.start < $1.start }.suffix(40))
+        return Array(turns(of: recent, label: label, removeEcho: removeEcho).suffix(count))
     }
 
-    /// Rewrites the file if anything changed. Cheap: a long call is a few hundred KB.
-    func flush(participants: [String], label: (Line) -> String, removeEcho: Bool, timestamps: Bool, force: Bool = false) {
-        guard dirty || force, !lines.isEmpty else { return }
+    /// Rewrites the file if anything changed, and returns the turns it wrote
+    /// (nil when nothing changed). Cheap: a long call is a few hundred KB.
+    @discardableResult
+    func flush(participants: [String], label: (Line) -> String, removeEcho: Bool, timestamps: Bool, force: Bool = false) -> [TranscriptTurn]? {
+        guard dirty || force, !lines.isEmpty else { return nil }
         dirty = false
+        let rendered = turns(of: lines, label: label, removeEcho: removeEcho)
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
         var out = "Meeting Title: \(title)\n"
         out += "Date: \(formatter.string(from: date))\n"
         out += "Meeting participants: \(participants.joined(separator: ", "))\n\n"
         out += "Transcript:\n"
-        for turn in turns(of: lines, label: label, removeEcho: removeEcho) {
+        for turn in rendered {
             let stamp = timestamps ? "[\(Self.clock(turn.start))] " : ""
             out += "\(stamp)\(turn.name): \(turn.text)\n"
         }
@@ -65,27 +77,22 @@ final class TranscriptWriter {
         } catch {
             log.error("Could not write transcript: \(error.localizedDescription)")
         }
+        return rendered
     }
 
     // MARK: - Rendering
 
-    private struct Turn {
-        let name: String
-        let start: Double
-        var text: String
-    }
-
-    private func turns(of lines: [Line], label: (Line) -> String, removeEcho: Bool) -> [Turn] {
+    private func turns(of lines: [Line], label: (Line) -> String, removeEcho: Bool) -> [TranscriptTurn] {
         let sorted = lines.sorted { $0.start < $1.start }
         let remote = sorted.filter { $0.source == .remote }
-        var result: [Turn] = []
+        var result: [TranscriptTurn] = []
         for line in sorted {
             if removeEcho, line.source == .me, isEcho(line, remote: remote) { continue }
             let name = label(line)
             if let last = result.last, last.name == name {
                 result[result.count - 1].text += " " + line.text
             } else {
-                result.append(Turn(name: name, start: line.start, text: line.text))
+                result.append(TranscriptTurn(id: result.count, name: name, start: line.start, text: line.text))
             }
         }
         return result
@@ -107,7 +114,7 @@ final class TranscriptWriter {
         text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }
     }
 
-    private static func clock(_ seconds: Double) -> String {
+    static func clock(_ seconds: Double) -> String {
         let total = Int(seconds)
         return total >= 3600
             ? String(format: "%d:%02d:%02d", total / 3600, (total % 3600) / 60, total % 60)

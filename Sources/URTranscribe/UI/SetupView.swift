@@ -28,7 +28,8 @@ struct SetupView: View {
                     Divider()
                     PermissionRow(
                         title: "Speech model", detail: "Apple's on-device transcription model. One-time download.",
-                        status: permissions.speechModel, actionTitle: "Download",
+                        status: permissions.speechModel, actionTitle: "Download", retryTitle: "Retry",
+                        error: permissions.speechModelError,
                         action: permissions.downloadSpeechModel)
                 }
             }
@@ -41,8 +42,10 @@ struct SetupView: View {
                     Divider()
                     PermissionRow(
                         title: "Speaker model", detail: "Tells remote voices apart on group calls. One-time download.",
-                        status: permissions.speakerModel, actionTitle: "Download",
-                        action: permissions.downloadSpeakerModel)
+                        status: permissions.speakerModel, actionTitle: "Download", retryTitle: "Retry",
+                        error: permissions.speakerModelError,
+                        action: permissions.downloadSpeakerModel,
+                        fallback: ("From file…", permissions.installSpeakerModelFromFile))
                     Divider()
                     PermissionRow(
                         title: "Accessibility", detail: "Reads who Zoom says is talking, to put names on voices.",
@@ -85,8 +88,14 @@ struct PermissionRow: View {
     let detail: String
     let status: Permissions.Status
     var actionTitle = "Allow"
+    /// Label for trying again after a failure. Without one, a failure points to System Settings.
+    var retryTitle: String? = nil
+    var error: String? = nil
     let action: () -> Void
+    /// Shown once granted (for example, a link to check the setting).
     var secondary: (String, () -> Void)? = nil
+    /// Shown while not granted (for example, another way to get it).
+    var fallback: (String, () -> Void)? = nil
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
@@ -94,15 +103,23 @@ struct PermissionRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.body.weight(.medium))
                 Text(detail).font(.caption).foregroundStyle(.secondary)
+                if status == .denied, let error {
+                    Text(error).font(.caption).foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
+                }
             }
             Spacer()
             if let secondary, status.isGranted {
                 Button(secondary.0, action: secondary.1).controlSize(.small)
             }
+            if let fallback, !status.isGranted, status != .working {
+                Button(fallback.0, action: fallback.1).controlSize(.small)
+            }
             switch status {
             case .granted: Text("Done").font(.caption).foregroundStyle(.secondary)
             case .working: ProgressView().controlSize(.small)
-            case .denied: Button("Open Settings", action: action).controlSize(.small)
+            case .denied: Button(retryTitle ?? "Open Settings", action: action).controlSize(.small)
             case .notAsked, .unknown: Button(actionTitle, action: action).controlSize(.small)
             }
         }
